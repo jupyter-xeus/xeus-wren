@@ -1,0 +1,16 @@
+name: xeus-wren
+channels:
+  - conda-forge
+dependencies:
+  # Build dependencies
+  - make
+  - cmake
+  # Host dependencies
+  - xeus
+  - nlohmann_json
+  - cppzmq
+  - xtl
+  # Test dependencies
+  - pytest
+  - jupyter_kernel_test
+  - nbval

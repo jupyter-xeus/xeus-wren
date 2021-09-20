@@ -1,0 +1,11 @@
+{
+  "display_name": "wren 0.4.0 (xwren)",
+  "argv": [
+      "/home/derthorsten/miniconda3/envs/xwren//bin/xwren",
+      "-f",
+      "{connection_file}"
+  ],
+  "language": "wren",
+  "metadata": {"debugger": false
+  }
+}
