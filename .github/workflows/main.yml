@@ -57,9 +57,7 @@ jobs:
           pytest .  --reruns 5
 
   win:
-    {% raw %}
     runs-on: ${{ matrix.os }}
-    {% endraw %} 
     strategy:
       fail-fast: false
       matrix:
