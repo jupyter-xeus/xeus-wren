@@ -16,8 +16,8 @@
 #include "xeus/xinput.hpp"
 #include "xeus/xinterpreter.hpp"
 
+#include "xeus/xinterpreter.hpp"
 #include "xeus-wren/xinterpreter.hpp"
-
 
 
 namespace nl = nlohmann;
@@ -106,6 +106,9 @@ namespace xeus_wren
             case WREN_RESULT_COMPILE_ERROR:
             { 
                 kernel_res["status"] = "error";
+                kernel_res["ename"] = "Compile Error";
+                kernel_res["evalue"] = "Compile Error";
+                kernel_res["traceback"] = nl::json::array();
                 this->publish_execution_error("Compile Error!", "Compile Error!", std::vector<std::string>());
 
             } break;
@@ -113,7 +116,10 @@ namespace xeus_wren
             case WREN_RESULT_RUNTIME_ERROR:
             { 
                 kernel_res["status"] = "error";
-                this->publish_execution_error("Runtime Error!", "Compile Error!", std::vector<std::string>());
+                kernel_res["ename"] = "Runtime Error";
+                kernel_res["evalue"] = "Runtime Error";
+                kernel_res["traceback"] = nl::json::array();
+                this->publish_execution_error("Runtime Error", "Compile Error!", std::vector<std::string>());
 
             } break;
 
