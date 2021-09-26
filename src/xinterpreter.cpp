@@ -218,8 +218,9 @@ namespace xeus_wren
         result["banner"] = "xwren";
         result["language_info"]["name"] = "wren";
         result["language_info"]["version"] = "0.4.0";
-        result["language_info"]["mimetype"] = "text/plain";
+        result["language_info"]["mimetype"] = "text/x-wren";
         result["language_info"]["file_extension"] = "wren";
+        result["language_info"]["codemirror_mode"] = "wren";
         return result;
     }
 

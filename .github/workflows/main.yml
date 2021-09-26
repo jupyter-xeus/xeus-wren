@@ -9,9 +9,7 @@ on:
 
 jobs:
   unix:
-    {% raw %}
     runs-on: ${{ matrix.os }}
-    {% endraw %} 
     strategy:
       fail-fast: false
       matrix:
