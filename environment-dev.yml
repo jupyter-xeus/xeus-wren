@@ -10,6 +10,7 @@ dependencies:
   - nlohmann_json
   - cppzmq
   - xtl
+  - wren
   # Test dependencies
   - pytest
   - jupyter_kernel_test
