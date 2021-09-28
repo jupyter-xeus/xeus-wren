@@ -72,6 +72,15 @@ jobs:
           environment-file: environment-dev.yml
           environment-name: xeus-wren
 
+      - name: info
+        shell: powershell
+        run: |
+          cd %CONDA_PREFIX%\Library
+          (ls -n) -split "`n" -join " "
+          cd lib
+          (ls -n) -split "`n" -join " "
+
+
       - name: micromamba shell hook
         shell: powershell
         run: |
