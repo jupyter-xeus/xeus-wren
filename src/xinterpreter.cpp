@@ -28,7 +28,7 @@ namespace xeus_wren
     struct xwren_error
     {
         std::string module;
-    }
+    };
 
 
     void writeFn(WrenVM* vm, const char* text) {
