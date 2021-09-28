@@ -80,12 +80,12 @@ jobs:
           micromamba shell hook -s cmd.exe -p C:\Users\runneradmin\micromamba
 
       - name: info
-        shell: powershell
+        shell: cmd
         run: |
           cd %CONDA_PREFIX%\Library
-          (ls -n) -split "`n" -join " "
+          dir
           cd lib
-          (ls -n) -split "`n" -join " "
+          dir
 
 
       - name: install cxx compiler
