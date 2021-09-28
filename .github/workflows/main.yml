@@ -82,6 +82,7 @@ jobs:
       - name: info
         shell: cmd
         run: |
+          call C:\Users\runneradmin\micromamba\condabin\micromamba.bat activate xeus-wren
           cd %CONDA_PREFIX%\Library
           dir
           cd lib
@@ -91,7 +92,7 @@ jobs:
       - name: install cxx compiler
         shell: powershell
         run: |
-          .\micromamba.exe install cxx-compiler  wren=0.4.0=h8ffe710_2 -c conda-forge -y
+          .\micromamba.exe install cxx-compiler  wren=0.4.0 -c conda-forge -y
 
       - name: cmake configure
         shell: cmd
