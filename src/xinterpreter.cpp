@@ -25,6 +25,10 @@ namespace nl = nlohmann;
 namespace xeus_wren
 {
  
+    struct xwren_error
+    {
+        std::string module;
+    }
 
 
     void writeFn(WrenVM* vm, const char* text) {
@@ -36,6 +40,7 @@ namespace xeus_wren
              const char* module, const int line,
              const char* msg)
     {
+        auto & interpreter = dynamic_cast<interpreter&>(xeus::get_interpreter());
         std::string errorTypeStr;
         std::stringstream ss;
         switch (errorType)
@@ -59,7 +64,7 @@ namespace xeus_wren
             } break;
         }
         std::cout<<"stderr: "<< ss.str() <<"\n";
-        xeus::get_interpreter().publish_execution_error(errorTypeStr, ss.str(), std::vector<std::string>());
+        interpreter.publish_execution_error(errorTypeStr, ss.str(), std::vector<std::string>());
     }
 
 
