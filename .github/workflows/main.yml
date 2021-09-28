@@ -72,6 +72,13 @@ jobs:
           environment-file: environment-dev.yml
           environment-name: xeus-wren
 
+
+
+      - name: micromamba shell hook
+        shell: powershell
+        run: |
+          micromamba shell hook -s cmd.exe -p C:\Users\runneradmin\micromamba
+
       - name: info
         shell: powershell
         run: |
@@ -80,11 +87,6 @@ jobs:
           cd lib
           (ls -n) -split "`n" -join " "
 
-
-      - name: micromamba shell hook
-        shell: powershell
-        run: |
-          micromamba shell hook -s cmd.exe -p C:\Users\runneradmin\micromamba
 
       - name: install cxx compiler
         shell: powershell
