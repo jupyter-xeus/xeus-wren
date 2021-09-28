@@ -85,6 +85,7 @@ jobs:
           call C:\Users\runneradmin\micromamba\condabin\micromamba.bat activate xeus-wren
           cd %CONDA_PREFIX%\Library
           dir
+          cd Library
           cd lib
           dir
 
