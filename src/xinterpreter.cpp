@@ -18,7 +18,7 @@
 
 #include "xeus/xinterpreter.hpp"
 #include "xeus-wren/xinterpreter.hpp"
-
+#include "xstring.hpp"
 
 namespace nl = nlohmann;
 
@@ -31,40 +31,55 @@ namespace xeus_wren
     };
 
 
-    void writeFn(WrenVM* vm, const char* text) {
-        std::cout<<"stdout: "<< text <<"\n";
-        xeus::get_interpreter().publish_stream("stdout", text);
+
+
+    class WrenInfo
+    {
+    public:
+        static inline std::array<std::string,21> const keywords =  
+        {
+            "as",
+            "break",
+            "class",
+            "construct",
+            "continue",
+            "else",
+            "false",
+            "for",
+            "foreign",
+            "if",
+            "import",
+            "in",
+            "is",
+            "null",
+            "return",
+            "static",
+            "super",
+            "this",
+            "true",
+            "var",
+            "while",
+        };
+
+        inline static bool is_identifier(char c)
+        {
+            return std::isalpha(c) || std::isdigit(c) || c == '_';
+        }
+    };
+
+
+
+    void write_fn(WrenVM* /*vm*/, const char* text) {
+        dynamic_cast<interpreter&>(xeus::get_interpreter()).write_handler(text);
     }
 
-    void errorFn(WrenVM* vm, WrenErrorType errorType,
+    void error_fn(WrenVM* /*vm*/, WrenErrorType errorType,
              const char* module, const int line,
              const char* msg)
     {
-        auto & interp = dynamic_cast<interpreter&>(xeus::get_interpreter());
-        std::string errorTypeStr;
-        std::stringstream ss;
-        switch (errorType)
-        {
-            case WREN_ERROR_COMPILE:
-            {
-                errorTypeStr = "WREN_ERROR_COMPILE";
-                ss<<"["<< module <<" "<< line <<"] [Error] "<< msg<<"\n";
-            } break;
-
-            case WREN_ERROR_STACK_TRACE:
-            {
-                errorTypeStr = "WREN_ERROR_STACK_TRACE";
-                ss<<"["<< module <<" "<< line <<"] [Error] "<< msg<<"\n";
-            } break;
-
-            case WREN_ERROR_RUNTIME:
-            {
-                errorTypeStr = "WREN_ERROR_RUNTIME";
-                ss<<"[Runtime Error] "<<msg<<"\n";
-            } break;
-        }
-        std::cout<<"stderr: "<< ss.str() <<"\n";
-        interp.publish_execution_error(errorTypeStr, ss.str(), std::vector<std::string>());
+        dynamic_cast<interpreter&>(xeus::get_interpreter()).error_handler(
+            errorType, module, line, msg
+        );
     }
 
 
@@ -77,8 +92,8 @@ namespace xeus_wren
         wrenInitConfiguration(&config);
 
         // the custom print and error functions
-        config.writeFn = &writeFn;
-        config.errorFn = &errorFn;
+        config.writeFn = &write_fn;
+        config.errorFn = &error_fn;
 
         // alloc
         p_vm = wrenNewVM(&config);
@@ -104,7 +119,12 @@ namespace xeus_wren
         kernel_res["payload"] = nl::json::array();
         kernel_res["user_expressions"] = nl::json::object();
 
+
+        std::stringstream codestream; 
+        codestream << "{var closure = Meta.compileExpression(\""<<code<<"\")}";
+
         WrenInterpretResult result = wrenInterpret(p_vm, "main",code.c_str());
+        //WrenInterpretResult result = wrenInterpret(p_vm, "main",codestream.str().c_str());
 
 
         switch (result) {
@@ -148,6 +168,7 @@ namespace xeus_wren
     void interpreter::configure_impl()
     {
         // Perform some operations
+        // /wrenInterpret(p_vm, "main","import meta for Meta");
     }
 
     nl::json interpreter::is_complete_request_impl(const std::string& code)
@@ -166,31 +187,49 @@ namespace xeus_wren
         }
         return result;
     }
-    nl::json interpreter::complete_request_impl(const std::string&  code,
+    nl::json interpreter::complete_request_impl(const std::string&  raw_code,
                                                      int cursor_pos)
     {
         nl::json result;
 
-        // Code starts with 'H', it could be the following completion
-        if (code[0] == 'H')
+
+
+        nl::json matches = nl::json::array();
+
+        // first we get  a substring from string[0:curser_pos+1]std
+        // and discard the right side of the curser pos
+        const auto code = raw_code.substr(0, cursor_pos);
+
+        // keyword matches
+        // ............................
         {
-            result["status"] = "ok";
-            result["matches"] = {
-                std::string("Hello"), 
-                std::string("Hey"), 
-                std::string("Howdy")
-            };
-            result["cursor_start"] = 5;
-            result["cursor_end"] = cursor_pos;
+            auto pos = -1;
+            for(auto i=code.size()-1; i>=0; --i)
+            {   
+                if(!WrenInfo::is_identifier(code[i]))
+                {
+                    pos = i;
+                    break;
+                }
+            }
+            result["cursor_start"] =  pos == -1 ? 0 : pos +1;
+            auto to_match = pos == -1 ? code : code.substr(pos+1, code.size() -(pos+1));
+
+            // check for kw matches
+            for(auto kw : WrenInfo::keywords)
+            {
+                if(startswith(kw, to_match))
+                {
+                    matches.push_back(kw);
+                }
+            }
+
         }
-        // No completion result
-        else
-        {
-            result["status"] = "ok";
-            result["matches"] = nl::json::array();
-            result["cursor_start"] = cursor_pos;
-            result["cursor_end"] = cursor_pos;
-        }
+
+
+        result["status"] = "ok";
+        result["cursor_end"] = cursor_pos;
+        result["matches"] =matches;
 
         return result;
     }
@@ -228,5 +267,42 @@ namespace xeus_wren
         result["language_info"]["codemirror_mode"] = "wren";
         return result;
     }
+
+
+    void interpreter::write_handler(const char* text)
+    {
+        this->publish_stream("stdout", text);
+    }
+
+    void interpreter::error_handler(WrenErrorType errorType,
+         const char* module, const int line,
+         const char* msg)
+    {
+        std::string errorTypeStr;
+        std::stringstream ss;
+        switch (errorType)
+        {
+            case WREN_ERROR_COMPILE:
+            {
+                errorTypeStr = "WREN_ERROR_COMPILE";
+                ss<<"["<< module <<" "<< line <<"] [Error] "<< msg<<"\n";
+            } break;
+
+            case WREN_ERROR_STACK_TRACE:
+            {
+                errorTypeStr = "WREN_ERROR_STACK_TRACE";
+                ss<<"["<< module <<" "<< line <<"] [Error] "<< msg<<"\n";
+            } break;
+
+            case WREN_ERROR_RUNTIME:
+            {
+                errorTypeStr = "WREN_ERROR_RUNTIME";
+                ss<<"[Runtime Error] "<<msg<<"\n";
+            } break;
+        }
+        std::cout<<"stderr: "<< ss.str() <<"\n";
+        this->publish_execution_error(errorTypeStr, ss.str(), std::vector<std::string>());
+    }
+
 
 }

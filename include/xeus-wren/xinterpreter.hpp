@@ -32,6 +32,14 @@ namespace nl = nlohmann;
 
 namespace xeus_wren
 {
+
+    void write_fn(WrenVM* vm, const char* text);
+
+    void error_fn(WrenVM* vm, WrenErrorType errorType,
+             const char* module, const int line,
+             const char* msg);
+
+
     class XEUS_WREN_API interpreter : public xeus::xinterpreter
     {
     public:
@@ -62,8 +70,24 @@ namespace xeus_wren
 
         void shutdown_request_impl() override;
 
-        WrenVM* p_vm;
 
+        void write_handler(const char* text);
+
+        void error_handler(WrenErrorType errorType,
+             const char* module, const int line,
+             const char* msg);
+
+
+
+        friend void write_fn(WrenVM* vm, const char* text);
+        friend void error_fn(WrenVM* vm, WrenErrorType errorType,
+                 const char* module, const int line,
+                 const char* msg);
+
+
+
+        WrenVM* p_vm;
+    
     };
 }
 
