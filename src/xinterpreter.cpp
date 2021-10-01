@@ -200,6 +200,12 @@ namespace xeus_wren
         // and discard the right side of the curser pos
         const auto code = raw_code.substr(0, cursor_pos);
 
+        // there are two modes for matching:
+        // 1) member matching
+        // 2) keyword matches + globals
+        
+        // atm we only implement the kw part of the second mode 
+
         // keyword matches
         // ............................
         {
@@ -223,7 +229,6 @@ namespace xeus_wren
                     matches.push_back(kw);
                 }
             }
-
         }
 
 
