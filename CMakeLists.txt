@@ -49,7 +49,7 @@ configure_file (
 OPTION(XEUS_WREN_DISABLE_ARCH_NATIVE "disable -march=native flag" OFF)
 OPTION(XEUS_WREN_DISABLE_TUNE_GENERIC "disable -mtune=generic flag" OFF)
 
-option(XEUS_WREN_BUILD_STATIC "Build xeus-wren static library" ON)
+option(XEUS_WREN_BUILD_STATIC "Build xeus-wren static library" OFF)
 OPTION(XEUS_WREN_BUILD_SHARED "Split xwren build into executable and library" ON)
 OPTION(XEUS_WREN_BUILD_EXECUTABLE "Build the xwren executable" ON)
 
