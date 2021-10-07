@@ -57,6 +57,9 @@ OPTION(XEUS_WREN_USE_SHARED_XEUS "Link xwren  with the xeus shared library (inst
 OPTION(XEUS_WREN_USE_SHARED_XEUS_WREN "Link xwren  with the xeus shared library (instead of the static library)" ON)
 OPTION(XEUS_WREN_EMSCRIPTEN_WASM_BUILD "Build for wasm with emscripten" OFF)
 
+
+message(STATUS "XEUS_WREN_EMSCRIPTEN_WASM_BUILD"  ${XEUS_WREN_EMSCRIPTEN_WASM_BUILD})
+
 if(XEUS_WREN_EMSCRIPTEN_WASM_BUILD)
     add_compile_definitions(XEUS_WREN_EMSCRIPTEN_WASM_BUILD)
     message("Build with emscripten")
