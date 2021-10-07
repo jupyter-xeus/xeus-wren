@@ -19,7 +19,7 @@
 
 EMSCRIPTEN_BINDINGS(my_module) {
     xeus::export_core();
-    using interpreter_type = xwren::interpreter;
+    using interpreter_type = xeus_wren::interpreter;
     xeus::export_kernel<interpreter_type>("xkernel");
 }
 
