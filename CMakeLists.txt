@@ -302,7 +302,7 @@ endif()
 if(XEUS_WREN_EMSCRIPTEN_WASM_BUILD)
 
     add_executable(xeus_wren src/main_emscripten_kernel.cpp )
-    target_link_libraries(xeus_wren  xeus-wren-static))
+    target_link_libraries(xeus_wren  xeus-wren-static)
     target_compile_features(xeus_wren PRIVATE cxx_std_17)
 
 endif()
