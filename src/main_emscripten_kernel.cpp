@@ -13,13 +13,13 @@
 
 #include <emscripten/bind.h>
 
-#include "xeus-lua/xinterpreter.hpp"
+#include "xeus-wren/xinterpreter.hpp"
 #include "xeus/xembind.hpp"
 
 
 EMSCRIPTEN_BINDINGS(my_module) {
     xeus::export_core();
-    using interpreter_type = xlua::interpreter;
+    using interpreter_type = xwren::interpreter;
     xeus::export_kernel<interpreter_type>("xkernel");
 }
 
