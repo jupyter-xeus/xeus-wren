@@ -55,7 +55,20 @@ OPTION(XEUS_WREN_BUILD_EXECUTABLE "Build the xwren executable" ON)
 
 OPTION(XEUS_WREN_USE_SHARED_XEUS "Link xwren  with the xeus shared library (instead of the static library)" ON)
 OPTION(XEUS_WREN_USE_SHARED_XEUS_WREN "Link xwren  with the xeus shared library (instead of the static library)" ON)
+OPTION(XEUS_WREN_EMSCRIPTEN_WASM_BUILD "Build for wasm with emscripten" OFF)
 
+if(XEUS_WREN_EMSCRIPTEN_WASM_BUILD)
+    add_compile_definitions(XEUS_WREN_EMSCRIPTEN_WASM_BUILD)
+    message("Build with emscripten")
+    SET(XEUS_WREN_DISABLE_ARCH_NATIVE ON)
+    SET(XEUS_WREN_DISABLE_TUNE_GENERIC ON)
+    SET(XEUS_WREN_BUILD_STATIC ON)
+    SET(XEUS_WREN_BUILD_SHARED OFF)
+    SET(XEUS_WREN_BUILD_EXECUTABLE OFF)
+    SET(XEUS_WREN_USE_SHARED_XEUS OFF)
+    SET(XEUS_WREN_USE_SHARED_XEUS_LUA OFF)
+    SET(XEUS_WREN_BUILD_TESTS OFF)
+endif()
 
 # Dependencies
 # ============
@@ -83,7 +96,7 @@ if (MSVC)
 endif ()
 
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID MATCHES "GNU" OR CMAKE_CXX_COMPILER_ID MATCHES "Intel")
-    if(NOT EMSCRIPTEN)    
+    if(NOT XEUS_LUA_EMSCRIPTEN_WASM_BUILD)    
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wunused-parameter -Wextra -Wreorder")
     endif()
     if (XEUS_WREN_DISABLE_ARCH_NATIVE AND NOT XEUS_WREN_DISABLE_TUNE_GENERIC)
@@ -103,6 +116,22 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID MATCHES "GNU"
     endif ()
 
 endif ()
+
+if(XEUS_WREN_EMSCRIPTEN_WASM_BUILD)
+
+    include(XeusEmscriptenWasmFlags)
+
+    set(XEUS_EMSCRIPTEN_WASM_FLAGS "${XEUS_EMSCRIPTEN_WASM_FLAGS} --bind --std=c++17")
+    set(XEUS_EMSCRIPTEN_WASM_FLAGS "${XEUS_EMSCRIPTEN_WASM_FLAGS} -s ASYNCIFY=1 -s 'ASYNCIFY_IMPORTS=[\"async_get_input_function\"]'")
+    set(XEUS_EMSCRIPTEN_WASM_FLAGS "${XEUS_EMSCRIPTEN_WASM_FLAGS} -s 'ASYNCIFY_STACK_SIZE=20480'")
+
+
+    #set(XEUS_EMSCRIPTEN_WASM_FLAGS "${XEUS_EMSCRIPTEN_WASM_FLAGS} --embed-file asset_dir")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${XEUS_EMSCRIPTEN_WASM_FLAGS}")
+    set(CMAKE_LINKER_FLAGS "${CMAKE_LINKER_FLAGS}  ${XEUS_EMSCRIPTEN_WASM_FLAGS} ---proxy-to-worker")
+endif()
+
+
 
 
 # Source files
@@ -266,6 +295,15 @@ if (XEUS_WREN_BUILD_EXECUTABLE)
     xeus_wren_set_common_options(xwren)
     xeus_wren_set_kernel_options(xwren)
 endif()
+
+if(XEUS_LUA_EMSCRIPTEN_WASM_BUILD)
+
+    add_executable(xeus_wren src/main_emscripten_kernel.cpp )
+    target_link_libraries(xeus_wren  xeus-wren-static))
+    target_compile_features(xeus_wren PRIVATE cxx_std_17)
+
+endif()
+
 
 
 # Installation

@@ -20,7 +20,29 @@
 #include "xeus-wren/xinterpreter.hpp"
 #include "xstring.hpp"
 
+
+#ifdef XEUS_WREN_EMSCRIPTEN_WASM_BUILD
+#include <emscripten.h>
+#endif
+
 namespace nl = nlohmann;
+
+
+#ifdef XEUS_WREN_EMSCRIPTEN_WASM_BUILD
+
+EM_JS(char *, async_get_input_function, (const char* str), {
+  return Asyncify.handleAsync(function () {
+    return self.async_get_input_function( UTF8ToString(str))
+    .then(function (jsString) {
+      var lengthBytes = lengthBytesUTF8(jsString)+1;
+      var stringOnWasmHeap = _malloc(lengthBytes);
+      stringToUTF8(jsString, stringOnWasmHeap, lengthBytes);
+      return stringOnWasmHeap;
+    });
+  });
+});
+
+#endif
 
 namespace xeus_wren
 {
