@@ -289,7 +289,7 @@ endif ()
 
 # xeus-wren
 # =======
-if (XEUS_WREN_BUILD_EXECUTABLE)
+if (XEUS_WREN_BUILD_EXECUTABLE AND NOT XEUS_LUA_EMSCRIPTEN_WASM_BUILD)
     add_executable(xwren ${XEUS_WREN_MAIN_SRC})
     target_compile_features(xwren PRIVATE cxx_std_17)
     xeus_wren_set_common_options(xwren)
