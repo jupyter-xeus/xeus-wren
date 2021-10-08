@@ -111,7 +111,7 @@ namespace xeus_wren
     {   
         #ifdef XEUS_WREN_EMSCRIPTEN_WASM_BUILD
         char* str = async_get_input_function("");
-        const std::string s = as_string(str);
+        const std::string s(str);
         free(str);
         #else 
         const auto s = xeus::blocking_input_request("", false);
