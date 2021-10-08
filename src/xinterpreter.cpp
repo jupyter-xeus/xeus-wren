@@ -44,6 +44,7 @@ EM_JS(char *, async_get_input_function, (const char* str), {
 
 #endif
 
+
 namespace xeus_wren
 {
  
@@ -105,6 +106,43 @@ namespace xeus_wren
     }
 
 
+
+    void blocking_input_request(WrenVM* vm)
+    {   
+        #ifdef XEUS_WREN_EMSCRIPTEN_WASM_BUILD
+        char* str = async_get_input_function("");
+        const std::string s as_string(str);
+        free(str);
+        #else 
+        const auto s = xeus::blocking_input_request("", false);
+        #endif
+        wrenSetSlotString(vm, 0, s.c_str());
+    }
+    WrenForeignMethodFn bind_foreign_method_fn(
+        WrenVM* /*vm*/,
+        const char* module,
+        const char* class_name,
+        bool isStatic,
+        const char* signature)
+    {
+   
+        std::cout<<"try to find : "<<module<<" "<<class_name<<" "<<isStatic<<" "<<signature<<"\n";
+        std::cerr<<"try to find : "<<module<<" "<<class_name<<" "<<isStatic<<" "<<signature<<"\n";
+        if (strcmp(module, "main") == 0)
+        {
+            if (strcmp(class_name, "Jstdin") == 0)
+            {
+            if (isStatic && strcmp(signature, "readLine()") == 0)
+                {
+                    return blocking_input_request; // C function for Jstdin.readLine().
+                }
+                // Other foreign methods on Math...
+            }
+            // Other classes in main...
+        }
+       //Other modules...
+    }
+
     interpreter::interpreter()
     {
         // create the config that the virtual machine will use
@@ -115,8 +153,8 @@ namespace xeus_wren
 
         // the custom print and error functions
         config.writeFn = &write_fn;
-        config.errorFn = &error_fn;
-
+        config.errorFn = &error_fn; 
+        config.bindForeignMethodFn = &bind_foreign_method_fn;
         // alloc
         p_vm = wrenNewVM(&config);
 
@@ -189,8 +227,11 @@ namespace xeus_wren
 
     void interpreter::configure_impl()
     {
-        // Perform some operations
-        // /wrenInterpret(p_vm, "main","import meta for Meta");
+        wrenInterpret(p_vm, "main",R"""(
+            class Jstdin {
+              foreign static readLine()
+            }
+        )""");
     }
 
     nl::json interpreter::is_complete_request_impl(const std::string& code)
@@ -277,7 +318,7 @@ namespace xeus_wren
 
    
     void interpreter::shutdown_request_impl() {
-        std::cout << "Bye!!" << std::endl;
+        std::cerr << "Bye!!" << std::endl;
     }
 
 
