@@ -147,6 +147,10 @@ set(XEUS_WREN_HEADERS
 
 set(XEUS_WREN_SRC
     src/xinterpreter.cpp 
+    src/xio.cpp
+    src/xcomplete.cpp
+    src/xerror.cpp
+    src/xjson.cpp
 )
 
 set(XEUS_WREN_MAIN_SRC

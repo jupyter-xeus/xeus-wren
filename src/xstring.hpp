@@ -5,8 +5,7 @@ namespace xeus_wren
     {
       return str.compare(0, cmp.length(), cmp) == 0;
     }
-
-
+    
 
     // // f("a.b = f.b")  =  "fb"
     // inline std::string take_(const std::string & code, int cursor_pos){

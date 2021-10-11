@@ -20,29 +20,8 @@
 #include "xeus-wren/xinterpreter.hpp"
 #include "xstring.hpp"
 
-
-#ifdef XEUS_WREN_EMSCRIPTEN_WASM_BUILD
-#include <emscripten.h>
-#endif
-
 namespace nl = nlohmann;
 
-
-#ifdef XEUS_WREN_EMSCRIPTEN_WASM_BUILD
-
-EM_JS(char *, async_get_input_function, (const char* str), {
-  return Asyncify.handleAsync(function () {
-    return self.async_get_input_function( UTF8ToString(str))
-    .then(function (jsString) {
-      var lengthBytes = lengthBytesUTF8(jsString)+1;
-      var stringOnWasmHeap = _malloc(lengthBytes);
-      stringToUTF8(jsString, stringOnWasmHeap, lengthBytes);
-      return stringOnWasmHeap;
-    });
-  });
-});
-
-#endif
 
 
 namespace xeus_wren
@@ -53,71 +32,53 @@ namespace xeus_wren
         std::string module;
     };
 
+    // implemented in xjson.cpp
+    void json_encode_str(WrenVM* vm);
 
-
-
-    class WrenInfo
-    {
-    public:
-        static inline std::array<std::string,21> const keywords =  
-        {
-            "as",
-            "break",
-            "class",
-            "construct",
-            "continue",
-            "else",
-            "false",
-            "for",
-            "foreign",
-            "if",
-            "import",
-            "in",
-            "is",
-            "null",
-            "return",
-            "static",
-            "super",
-            "this",
-            "true",
-            "var",
-            "while",
-        };
-
-        inline static bool is_identifier(char c)
-        {
-            return std::isalpha(c) || std::isdigit(c) || c == '_';
-        }
-    };
-
-
-
-    void write_fn(WrenVM* /*vm*/, const char* text) {
-        dynamic_cast<interpreter&>(xeus::get_interpreter()).write_handler(text);
-    }
-
+    // implemented in xio.cpp
+    void write_fn(WrenVM* /*vm*/, const char* text);
     void error_fn(WrenVM* /*vm*/, WrenErrorType errorType,
              const char* module, const int line,
-             const char* msg)
+             const char* msg);
+    void blocking_input_request(WrenVM* vm);
+
+
+    WrenLoadModuleResult load_module_fn(WrenVM* vm, const char* name) 
     {
-        dynamic_cast<interpreter&>(xeus::get_interpreter()).error_handler(
-            errorType, module, line, msg
-        );
+        WrenLoadModuleResult result = {0};
+        if (strcmp(name, "iwren") == 0)
+        {
+            result.source = R"""(
+            class Stdin{
+                foreign static readLine()   
+            }
+            class JsonEncode{
+                foreign static encodeStr(str)   
+                
+                static encode(obj) {
+                    if (obj is Num || obj is Bool || obj is Null) {
+                        return obj.toString
+                    } else if (obj is String) {
+                        return encodeStr(obj)
+                    } else if (obj is List) {
+                        var substrings = obj.map { |o|  encode(o) }
+                        return "[" + substrings.join(",") + "]"
+                    } else if (obj is Map) {
+                        var substrings = obj.keys.map { |key|
+                            return encode(key) + ":" + encode(obj[key])
+                        }
+                        return "{" + substrings.join(",") + "}"
+                    } else{
+                        Fiber.abort("called encode with object which does not support json encoding")
+                    }
+                }
+            }
+            )""";
+        }
+        return result;
     }
 
 
-
-    void blocking_input_request(WrenVM* vm)
-    {   
-        #ifdef XEUS_WREN_EMSCRIPTEN_WASM_BUILD
-        char* str = async_get_input_function("");
-        const std::string s(str);
-        free(str);
-        #else 
-        const auto s = xeus::blocking_input_request("", false);
-        #endif
-        wrenSetSlotString(vm, 0, s.c_str());
-    }
     WrenForeignMethodFn bind_foreign_method_fn(
         WrenVM* /*vm*/,
         const char* module,
@@ -125,22 +86,24 @@ namespace xeus_wren
         bool isStatic,
         const char* signature)
     {
-   
-        std::cout<<"try to find : "<<module<<" "<<class_name<<" "<<isStatic<<" "<<signature<<"\n";
-        std::cerr<<"try to find : "<<module<<" "<<class_name<<" "<<isStatic<<" "<<signature<<"\n";
-        if (strcmp(module, "main") == 0)
+
+        auto & self = dynamic_cast<interpreter&>(xeus::get_interpreter());
+        auto & forein_methods = self.m_forein_methods;
+
+        if(isStatic)
         {
-            if (strcmp(class_name, "Jstdin") == 0)
+            if(auto mod_iter = forein_methods.find(module); mod_iter!= forein_methods.end())
             {
-            if (isStatic && strcmp(signature, "readLine()") == 0)
+                if(auto class_iter = mod_iter->second.find(class_name); class_iter!=mod_iter->second.end())
                 {
-                    return blocking_input_request; // C function for Jstdin.readLine().
+                    if(auto func_iter = class_iter->second.find(signature); func_iter!=class_iter->second.end())
+                    {
+                        return func_iter->second;
+                    }
                 }
-                // Other foreign methods on Math...
             }
-            // Other classes in main...
         }
-       //Other modules...
+        return nullptr;
     }
 
     interpreter::interpreter()
@@ -155,6 +118,8 @@ namespace xeus_wren
         config.writeFn = &write_fn;
         config.errorFn = &error_fn; 
         config.bindForeignMethodFn = &bind_foreign_method_fn;
+        config.loadModuleFn = &load_module_fn;
+        
         // alloc
         p_vm = wrenNewVM(&config);
 
@@ -227,10 +192,12 @@ namespace xeus_wren
 
     void interpreter::configure_impl()
     {
+
+        //m_forein_methods["main"]["Jstdin"]["readLine()"] = blocking_input_request;
+        m_forein_methods["iwren"]["Stdin"]["readLine()"] = blocking_input_request;
+        m_forein_methods["iwren"]["JsonEncode"]["encodeStr(_)"] =  json_encode_str;
+
         wrenInterpret(p_vm, "main",R"""(
-            class Jstdin {
-              foreign static readLine()
-            }
         )""");
     }
 
@@ -248,56 +215,7 @@ namespace xeus_wren
             result["status"] = "invalid";
             result["indent"] = "   ";
         }
-        return result;
-    }
-    nl::json interpreter::complete_request_impl(const std::string&  raw_code,
-                                                     int cursor_pos)
-    {
-        nl::json result;
 
-
-
-        nl::json matches = nl::json::array();
-
-        // first we get  a substring from string[0:curser_pos+1]std
-        // and discard the right side of the curser pos
-        const auto code = raw_code.substr(0, cursor_pos);
-
-        // there are two modes for matching:
-        // 1) member matching
-        // 2) keyword matches + globals
-        
-        // atm we only implement the kw part of the second mode 
-
-        // keyword matches
-        // ............................
-        {
-            auto pos = -1;
-            for(auto i=code.size()-1; i>=0; --i)
-            {   
-                if(!WrenInfo::is_identifier(code[i]))
-                {
-                    pos = i;
-                    break;
-                }
-            }
-            result["cursor_start"] =  pos == -1 ? 0 : pos +1;
-            auto to_match = pos == -1 ? code : code.substr(pos+1, code.size() -(pos+1));
-
-            // check for kw matches
-            for(auto kw : WrenInfo::keywords)
-            {
-                if(startswith(kw, to_match))
-                {
-                    matches.push_back(kw);
-                }
-            }
-        }
-
-
-        result["status"] = "ok";
-        result["cursor_end"] = cursor_pos;
-        result["matches"] =matches;
 
         return result;
     }
@@ -318,7 +236,7 @@ namespace xeus_wren
 
    
     void interpreter::shutdown_request_impl() {
-        std::cerr << "Bye!!" << std::endl;
+        std::cerr << "shuting down xwren" << std::endl;
     }
 
 
@@ -341,36 +259,5 @@ namespace xeus_wren
     {
         this->publish_stream("stdout", text);
     }
-
-    void interpreter::error_handler(WrenErrorType errorType,
-         const char* module, const int line,
-         const char* msg)
-    {
-        std::string errorTypeStr;
-        std::stringstream ss;
-        switch (errorType)
-        {
-            case WREN_ERROR_COMPILE:
-            {
-                errorTypeStr = "WREN_ERROR_COMPILE";
-                ss<<"["<< module <<" "<< line <<"] [Error] "<< msg<<"\n";
-            } break;
-
-            case WREN_ERROR_STACK_TRACE:
-            {
-                errorTypeStr = "WREN_ERROR_STACK_TRACE";
-                ss<<"["<< module <<" "<< line <<"] [Error] "<< msg<<"\n";
-            } break;
-
-            case WREN_ERROR_RUNTIME:
-            {
-                errorTypeStr = "WREN_ERROR_RUNTIME";
-                ss<<"[Runtime Error] "<<msg<<"\n";
-            } break;
-        }
-        std::cout<<"stderr: "<< ss.str() <<"\n";
-        this->publish_execution_error(errorTypeStr, ss.str(), std::vector<std::string>());
-    }
-
 
 }
