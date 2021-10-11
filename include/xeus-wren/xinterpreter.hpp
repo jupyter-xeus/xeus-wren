@@ -17,6 +17,7 @@
 
 #include <string>
 #include <memory>
+#include <map>
 
 #include "nlohmann/json.hpp"
 
@@ -32,12 +33,6 @@ namespace nl = nlohmann;
 
 namespace xeus_wren
 {
-
-    void write_fn(WrenVM* vm, const char* text);
-
-    void error_fn(WrenVM* vm, WrenErrorType errorType,
-             const char* module, const int line,
-             const char* msg);
 
 
     class XEUS_WREN_API interpreter : public xeus::xinterpreter
@@ -84,10 +79,20 @@ namespace xeus_wren
                  const char* module, const int line,
                  const char* msg);
 
-
+    public:
+        std::map<
+            std::string, /*module*/
+            std::map< 
+                std::string, /* cls_name */
+                std::map<
+                    std::string, /* method name / signature */
+                    WrenForeignMethodFn
+                >
+            >
+        > m_forein_methods;
 
         WrenVM* p_vm;
-    
+        
     };
 }
 
