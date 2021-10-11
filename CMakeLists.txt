@@ -151,6 +151,7 @@ set(XEUS_WREN_SRC
     src/xcomplete.cpp
     src/xerror.cpp
     src/xjson.cpp
+    src/xdisplay.cpp
 )
 
 set(XEUS_WREN_MAIN_SRC

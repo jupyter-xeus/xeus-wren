@@ -32,6 +32,9 @@ namespace xeus_wren
         std::string module;
     };
 
+    // implemenyed in xdisplay.cpp
+    void display_data(WrenVM* vm);
+
     // implemented in xjson.cpp
     void json_encode_str(WrenVM* vm);
 
@@ -54,23 +57,50 @@ namespace xeus_wren
             }
             class JsonEncode{
                 foreign static encodeStr(str)   
-                
+
                 static encode(obj) {
-                    if (obj is Num || obj is Bool || obj is Null) {
+                    if (obj is Num || obj is Bool) {
                         return obj.toString
                     } else if (obj is String) {
                         return encodeStr(obj)
                     } else if (obj is List) {
-                        var substrings = obj.map { |o|  encode(o) }
-                        return "[" + substrings.join(",") + "]"
+                        var encodedItems = obj.map { |o|  encode(o) }
+                        return "[" + encodedItems.join(",") + "]"
                     } else if (obj is Map) {
-                        var substrings = obj.keys.map { |key|
+                        var encodedItems = obj.keys.map { |key|
                             return encode(key) + ":" + encode(obj[key])
                         }
-                        return "{" + substrings.join(",") + "}"
+                        return "{" + encodedItems.join(",") + "}"
                     } else{
                         Fiber.abort("called encode with object which does not support json encoding")
                     }
+                }
+            }
+            class Display{
+                static display(obj){
+                    return JsonEncode.encode(obj)
+                }
+
+                foreign static display_data(a,b,c)
+
+                static display_mimetype(mimetype, data){
+                    var obj = {
+                        mimetype : data
+                    }
+                    display_data(JsonEncode.encode(obj), "{}", "{}")
+                }
+
+                static display_html(data){
+                   display_mimetype("text/html", data)
+                }
+                static display_json(data){
+                   display_mimetype("application/json", data)
+                }
+                static display_plain_text(data){
+                   display_mimetype("text/plain", data)
+                }
+                static display_latex(data){
+                   display_mimetype("text/latex", data)
                 }
             }
             )""";
@@ -196,6 +226,7 @@ namespace xeus_wren
         //m_forein_methods["main"]["Jstdin"]["readLine()"] = blocking_input_request;
         m_forein_methods["iwren"]["Stdin"]["readLine()"] = blocking_input_request;
         m_forein_methods["iwren"]["JsonEncode"]["encodeStr(_)"] =  json_encode_str;
+        m_forein_methods["iwren"]["Display"]["display_data(_,_,_)"] =  xeus_wren::display_data;
 
         wrenInterpret(p_vm, "main",R"""(
         )""");
