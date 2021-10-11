@@ -20,6 +20,18 @@ namespace nl = nlohmann;
 
 namespace xeus_wren
 {   
+
+    void clear_output(WrenVM* vm)
+    {   
+        auto & self = xeus::get_interpreter();
+        self.clear_output(false);
+    }
+    void clear_output_wait(WrenVM* vm)
+    {   
+        auto & self = xeus::get_interpreter();
+        const bool wait = wrenGetSlotString(vm, 1);
+        self.clear_output(wait);
+    }
     void display_data(WrenVM* vm)
     {   
         auto & self = xeus::get_interpreter();
@@ -39,9 +51,6 @@ namespace xeus_wren
             self.publish_execution_error("json::parse_error",ex.what(),std::vector<std::string>());
 
         }
-
-
-        
     }
 
 }

@@ -34,6 +34,8 @@ namespace xeus_wren
 
     // implemenyed in xdisplay.cpp
     void display_data(WrenVM* vm);
+    void clear_output(WrenVM* vm);
+    void clear_output_wait(WrenVM* vm);
 
     // implemented in xjson.cpp
     void json_encode_str(WrenVM* vm);
@@ -82,6 +84,9 @@ namespace xeus_wren
                 }
 
                 foreign static display_data(a,b,c)
+                foreign static clear_output()
+                foreign static clear_output_wait(w)
+
 
                 static display_mimetype(mimetype, data){
                     var obj = {
