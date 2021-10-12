@@ -85,7 +85,7 @@ namespace xeus_wren
 
                 foreign static display_data(a,b,c)
                 foreign static clear_output()
-                foreign static clear_output_wait(w)
+                foreign static clear_output(w)
 
 
                 static display_mimetype(mimetype, data){
@@ -232,7 +232,8 @@ namespace xeus_wren
         m_forein_methods["iwren"]["Stdin"]["readLine()"] = blocking_input_request;
         m_forein_methods["iwren"]["JsonEncode"]["encodeStr(_)"] =  json_encode_str;
         m_forein_methods["iwren"]["Display"]["display_data(_,_,_)"] =  xeus_wren::display_data;
-
+        m_forein_methods["iwren"]["Display"]["clear_output()"] =  xeus_wren::clear_output;
+        m_forein_methods["iwren"]["Display"]["clear_output(_)"] =  xeus_wren::clear_output_wait;
         wrenInterpret(p_vm, "main",R"""(
         )""");
     }
