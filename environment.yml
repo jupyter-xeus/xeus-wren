@@ -2,7 +2,7 @@ name: xeus-wren
 channels:
   - conda-forge
 dependencies:
-  - xeus-wren=0.1.0
+  - xeus-wren=0.2.0
   - notebook
   - ipywidgets>=7.6
   - jupyterlab=3
