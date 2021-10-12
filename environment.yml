@@ -1,6 +1,7 @@
 name: xeus-wren
 channels:
   - conda-forge
+  - cf-staging
 dependencies:
   - xeus-wren=0.2.0
   - notebook
