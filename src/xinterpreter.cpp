@@ -48,9 +48,9 @@ namespace xeus_wren
     void blocking_input_request(WrenVM* vm);
 
 
-    WrenLoadModuleResult load_module_fn(WrenVM* vm, const char* name) 
+    WrenLoadModuleResult load_module_fn(WrenVM* /*vm*/, const char* name) 
     {
-        WrenLoadModuleResult result = {0};
+        WrenLoadModuleResult result = {0,0,0};
         if (strcmp(name, "iwren") == 0)
         {
             result.source = R"""(
@@ -108,9 +108,61 @@ namespace xeus_wren
                    display_mimetype("text/latex", data)
                 }
             }
+
+            foreign class MyFile {
+              construct create(path) {}
+
+              foreign write(text)
+              foreign close()
+            }
             )""";
+
+
         }
         return result;
+    }
+
+
+
+    // void fileAllocate(WrenVM* vm)
+    // {
+    //   FILE** file = (FILE**)wrenSetSlotNewForeign(vm,
+    //       0, 0, sizeof(FILE*));
+    //   const char* path = wrenGetSlotString(vm, 1);
+    //   *file = fopen(path, "w");
+    // }
+    // void fileFinalize(void* data)
+    // {
+    //   //closeFile((FILE**) data);
+    // }
+
+    WrenForeignClassMethods bind_foreign_class_fn(
+    WrenVM* /*vm*/, const char* module, const char* className)
+    {
+        WrenForeignClassMethods methods;
+
+        if (strcmp(module, "iwren") == 0){
+            if (strcmp(className, "MyFile") == 0)
+            {
+                methods.allocate = [](WrenVM* vm)
+                {
+                    std::cout<<"alloc Myfile";
+                    FILE** file = (FILE**)wrenSetSlotNewForeign(vm,
+                        0, 0, sizeof(FILE*));
+                    const char* path = wrenGetSlotString(vm, 1);
+                    std::cout<<"path: "<<path<<"\n";
+                    *file = fopen(path, "w");
+                };
+                methods.finalize =  [](void* /*data*/){};
+                return methods;
+            }
+        }
+
+        // Unknown class.
+        methods.allocate = NULL;
+        methods.finalize = NULL;
+        return methods;
+
     }
 
 
@@ -118,14 +170,14 @@ namespace xeus_wren
         WrenVM* /*vm*/,
         const char* module,
         const char* class_name,
-        bool isStatic,
+        bool /*isStatic*/,
         const char* signature)
     {
 
         auto & self = dynamic_cast<interpreter&>(xeus::get_interpreter());
         auto & forein_methods = self.m_forein_methods;
 
-        if(isStatic)
+        if(true)
         {
             if(auto mod_iter = forein_methods.find(module); mod_iter!= forein_methods.end())
             {
@@ -142,7 +194,15 @@ namespace xeus_wren
     }
 
     interpreter::interpreter()
+    : m_vm()
     {
+
+        auto & fubar_mod = m_vm.add_module("fubar");
+        auto & fubar_cls = fubar_mod.add_class("Fubar");
+        fubar_cls.add_static("bar(a)","return 2*a");
+
+
+
         // create the config that the virtual machine will use
         WrenConfiguration config;
 
@@ -153,6 +213,7 @@ namespace xeus_wren
         config.writeFn = &write_fn;
         config.errorFn = &error_fn; 
         config.bindForeignMethodFn = &bind_foreign_method_fn;
+        config.bindForeignClassFn = &bind_foreign_class_fn;
         config.loadModuleFn = &load_module_fn;
         
         // alloc
@@ -234,6 +295,25 @@ namespace xeus_wren
         m_forein_methods["iwren"]["Display"]["display_data(_,_,_)"] =  xeus_wren::display_data;
         m_forein_methods["iwren"]["Display"]["clear_output()"] =  xeus_wren::clear_output;
         m_forein_methods["iwren"]["Display"]["clear_output(_)"] =  xeus_wren::clear_output_wait;
+        m_forein_methods["iwren"]["MyFile"]["write(_)"] = [](WrenVM* vm)
+        {
+            FILE** file = (FILE**)wrenGetSlotForeign(vm, 0);
+
+            // Make sure the file is still open.
+            if (*file == NULL)
+            {
+                wrenSetSlotString(vm, 0, "Cannot write to a closed file.");
+                wrenAbortFiber(vm, 0);
+                return;
+            }
+
+            const char* text = wrenGetSlotString(vm, 1);
+            fwrite(text, sizeof(char), strlen(text), *file);
+        };
+
+        m_forein_methods["iwren"]["MyFile"]["close()"] = [](WrenVM* vm){};
+
+
         wrenInterpret(p_vm, "main",R"""(
         )""");
     }

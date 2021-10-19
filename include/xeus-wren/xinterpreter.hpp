@@ -23,7 +23,7 @@
 
 #include "xeus_wren_config.hpp"
 #include "xeus/xinterpreter.hpp"
-
+#include "xeus-wren/wrenbind.hpp"
 
 extern "C" {
 #include <wren.h>
@@ -92,7 +92,7 @@ namespace xeus_wren
         > m_forein_methods;
 
         WrenVM* p_vm;
-        
+        xwren::xvm m_vm;
     };
 }
 

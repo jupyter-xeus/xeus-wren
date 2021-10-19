@@ -16,4 +16,5 @@ dependencies:
   - jupyter_kernel_test
   - nbval
   - pytest-rerunfailures
+  - doctest
 

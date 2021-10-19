@@ -21,7 +21,7 @@ namespace nl = nlohmann;
 namespace xeus_wren
 {   
 
-    void clear_output(WrenVM* vm)
+    void clear_output(WrenVM* /*vm*/)
     {   
         auto & self = xeus::get_interpreter();
         self.clear_output(false);

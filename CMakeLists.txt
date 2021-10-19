@@ -49,12 +49,18 @@ configure_file (
 OPTION(XEUS_WREN_DISABLE_ARCH_NATIVE "disable -march=native flag" OFF)
 OPTION(XEUS_WREN_DISABLE_TUNE_GENERIC "disable -mtune=generic flag" OFF)
 
+option(XEUS_WREN_BUILD_TESTS "Build xeus-wren tess" ON)
+
 option(XEUS_WREN_BUILD_STATIC "Build xeus-wren static library" OFF)
 OPTION(XEUS_WREN_BUILD_SHARED "Split xwren build into executable and library" ON)
 OPTION(XEUS_WREN_BUILD_EXECUTABLE "Build the xwren executable" ON)
 
 OPTION(XEUS_WREN_USE_SHARED_XEUS "Link xwren  with the xeus shared library (instead of the static library)" ON)
 OPTION(XEUS_WREN_USE_SHARED_XEUS_WREN "Link xwren  with the xeus shared library (instead of the static library)" ON)
+
+OPTION(XEUS_WREN_WITH_XWIDGETS "Build xeus-wren with xwidgets" ON)
+OPTION(XEUS_WREN_USE_SHARED_XWIDGETS "Link xwren  with the xwidgets shared library (instead of the static library)" ON)
+
 OPTION(XEUS_WREN_EMSCRIPTEN_WASM_BUILD "Build for wasm with emscripten" OFF)
 
 
@@ -119,6 +125,18 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID MATCHES "GNU"
     endif ()
 
 endif ()
+
+if(XEUS_WREN_WITH_XWIDGETS)
+    add_compile_definitions(XEUS_WREN_WITH_XWIDGETS)
+endif()
+
+if(XEUS_WREN_WITH_XWIDGETS)
+    if (NOT TARGET xwidgets)
+        find_package(xwidgets ${xwidgets_REQUIRED_VERSION} REQUIRED)
+        find_package(xproperty ${xproperty_REQUIRED_VERSION} REQUIRED)
+
+    endif ()
+endif()
 
 if(XEUS_WREN_EMSCRIPTEN_WASM_BUILD)
 
@@ -261,7 +279,22 @@ macro(xeus_wren_create_target target_name linkage output_name)
         set(XEUS_WREN_XEUS_TARGET xeus-static)
     endif ()
 
-    target_link_libraries(${target_name} PUBLIC ${XEUS_WREN_XEUS_TARGET} xtl )
+
+
+    if(XEUS_WREN_WITH_XWIDGETS)
+        if (XEUS_WREN_USE_SHARED_XWIDGETS)
+            set(XEUS_WREN_XWIDGETS_TARGET xwidgets)
+        else ()
+            set(XEUS_WREN_XWIDGETS_TARGET xwidgets-static)
+        endif ()
+        set(XEUS_WREN_XPROPERTY_TARGET xproperty)
+    else()
+        set(XEUS_WREN_XPROPERTY_TARGET "")
+        set(XEUS_WREN_XWIDGETS_TARGET "")
+    endif()
+
+
+    target_link_libraries(${target_name} PUBLIC ${XEUS_WREN_XEUS_TARGET} xtl ${XLUA_XWIDGETS_TARGET} ${XLUA_XPROPERTY_TARGET})
     if (WIN32 OR CYGWIN)
         # 
     elseif (APPLE)
@@ -313,7 +346,20 @@ if(XEUS_WREN_EMSCRIPTEN_WASM_BUILD)
 endif()
 
 
-
+# Tests
+# ==============
+if(XEUS_WREN_BUILD_TESTS)
+find_package(doctest REQUIRED)
+add_executable(test_xeus_wren 
+        ${CMAKE_CURRENT_SOURCE_DIR}/test/test_main.cpp  
+        ${CMAKE_CURRENT_SOURCE_DIR}/test/test_xwren.cpp
+)
+target_link_libraries(test_xeus_wren PRIVATE doctest::doctest  ${WREN_LIBRARY})
+target_include_directories(test_xeus_wren
+                               PUBLIC
+                               ${WREN_INCLUDE_DIR}
+                               $<BUILD_INTERFACE:${XEUS_WREN_INCLUDE_DIR}>)
+endif()
 # Installation
 # ============
 
