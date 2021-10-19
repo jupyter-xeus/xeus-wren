@@ -305,11 +305,9 @@ if (XEUS_WREN_BUILD_EXECUTABLE AND NOT XEUS_WREN_EMSCRIPTEN_WASM_BUILD)
 endif()
 
 if(XEUS_WREN_EMSCRIPTEN_WASM_BUILD)
-
     add_executable(xeus_kernel src/main_emscripten_kernel.cpp )
     target_link_libraries(xeus_kernel  xeus-wren-static)
     target_compile_features(xeus_kernel PRIVATE cxx_std_17)
-
 endif()
 
 
