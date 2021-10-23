@@ -20,6 +20,7 @@
 #include <map>
 
 #include "nlohmann/json.hpp"
+#include "wrenbind17/wrenbind17.hpp"
 
 #include "xeus_wren_config.hpp"
 #include "xeus/xinterpreter.hpp"
@@ -92,6 +93,8 @@ namespace xeus_wren
         > m_forein_methods;
 
         WrenVM* p_vm;
+
+        wrenbind17::VM m_vm;
         
     };
 }

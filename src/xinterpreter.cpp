@@ -48,9 +48,9 @@ namespace xeus_wren
     void blocking_input_request(WrenVM* vm);
 
 
-    WrenLoadModuleResult load_module_fn(WrenVM* vm, const char* name) 
+    WrenLoadModuleResult load_module_fn(WrenVM* /*vm*/, const char* name) 
     {
-        WrenLoadModuleResult result = {0};
+        WrenLoadModuleResult result = {0, 0, 0};
         if (strcmp(name, "iwren") == 0)
         {
             result.source = R"""(
@@ -257,7 +257,7 @@ namespace xeus_wren
         return result;
     }
 
-    nl::json interpreter::inspect_request_impl(const std::string& code,
+    nl::json interpreter::inspect_request_impl(const std::string& /*code*/,
                                                       int /*cursor_pos*/,
                                                       int /*detail_level*/)
     {

@@ -87,6 +87,7 @@ if (NOT TARGET xeus AND NOT TARGET xeus-static)
 endif ()
 
 find_package(WREN  REQUIRED)
+find_package(WRENBIND17  REQUIRED)
 
 
 # Flags
@@ -252,6 +253,7 @@ macro(xeus_wren_create_target target_name linkage output_name)
     target_include_directories(${target_name}
                                PUBLIC
                                ${WREN_INCLUDE_DIR}
+                               ${WRENBIND17_INCLUDE_DIR}
                                $<BUILD_INTERFACE:${XEUS_WREN_INCLUDE_DIR}>
                                $<INSTALL_INTERFACE:include>)
 
