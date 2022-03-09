@@ -1,9 +1,9 @@
 #############################################################################
-#Copyright (c) 2021,                                          
-#                                                                         
-#Distributed under the terms of the BSD 3-Clause License.                 
-#                                                                         
-#The full license is in the file LICENSE, distributed with this software. 
+#Copyright (c) 2021,
+#
+#Distributed under the terms of the BSD 3-Clause License.
+#
+#The full license is in the file LICENSE, distributed with this software.
 #############################################################################
 
 cmake_minimum_required(VERSION 3.4.3)
@@ -57,9 +57,6 @@ OPTION(XEUS_WREN_USE_SHARED_XEUS "Link xwren  with the xeus shared library (inst
 OPTION(XEUS_WREN_USE_SHARED_XEUS_WREN "Link xwren  with the xeus shared library (instead of the static library)" ON)
 OPTION(XEUS_WREN_EMSCRIPTEN_WASM_BUILD "Build for wasm with emscripten" OFF)
 
-
-message(STATUS "XEUS_WREN_EMSCRIPTEN_WASM_BUILD"  ${XEUS_WREN_EMSCRIPTEN_WASM_BUILD})
-
 if(XEUS_WREN_EMSCRIPTEN_WASM_BUILD)
     add_compile_definitions(XEUS_WREN_EMSCRIPTEN_WASM_BUILD)
     message("Build with emscripten")
@@ -69,7 +66,7 @@ if(XEUS_WREN_EMSCRIPTEN_WASM_BUILD)
     SET(XEUS_WREN_BUILD_SHARED OFF)
     SET(XEUS_WREN_BUILD_EXECUTABLE OFF)
     SET(XEUS_WREN_USE_SHARED_XEUS OFF)
-    SET(XEUS_WREN_USE_SHARED_XEUS_LUA OFF)
+    SET(XEUS_WREN_USE_SHARED_XEUS_WREN OFF)
     SET(XEUS_WREN_BUILD_TESTS OFF)
 endif()
 
@@ -77,7 +74,7 @@ endif()
 # ============
 
 set(xtl_REQUIRED_VERSION 0.6.23)
-set(xeus_REQUIRED_VERSION 2.0.0)
+set(xeus_REQUIRED_VERSION 2.4.0)
 
 if (NOT TARGET xtl)
     find_package(xtl ${xtl_REQUIRED_VERSION} REQUIRED)
@@ -87,7 +84,6 @@ if (NOT TARGET xeus AND NOT TARGET xeus-static)
 endif ()
 
 find_package(WREN  REQUIRED)
-
 
 # Flags
 # =====
@@ -99,7 +95,7 @@ if (MSVC)
 endif ()
 
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID MATCHES "GNU" OR CMAKE_CXX_COMPILER_ID MATCHES "Intel")
-    if(NOT XEUS_LUA_EMSCRIPTEN_WASM_BUILD)    
+    if(NOT XEUS_WREN_EMSCRIPTEN_WASM_BUILD)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wunused-parameter -Wextra -Wreorder")
     endif()
     if (XEUS_WREN_DISABLE_ARCH_NATIVE AND NOT XEUS_WREN_DISABLE_TUNE_GENERIC)
@@ -121,21 +117,9 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID MATCHES "GNU"
 endif ()
 
 if(XEUS_WREN_EMSCRIPTEN_WASM_BUILD)
-
-    include(XeusEmscriptenWasmFlags)
-
-    set(XEUS_EMSCRIPTEN_WASM_FLAGS "${XEUS_EMSCRIPTEN_WASM_FLAGS} --bind --std=c++17")
-    set(XEUS_EMSCRIPTEN_WASM_FLAGS "${XEUS_EMSCRIPTEN_WASM_FLAGS} -s ASYNCIFY=1 -s 'ASYNCIFY_IMPORTS=[\"async_get_input_function\"]'")
-    set(XEUS_EMSCRIPTEN_WASM_FLAGS "${XEUS_EMSCRIPTEN_WASM_FLAGS} -s 'ASYNCIFY_STACK_SIZE=20480'")
-
-
-    #set(XEUS_EMSCRIPTEN_WASM_FLAGS "${XEUS_EMSCRIPTEN_WASM_FLAGS} --embed-file asset_dir")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${XEUS_EMSCRIPTEN_WASM_FLAGS}")
-    set(CMAKE_LINKER_FLAGS "${CMAKE_LINKER_FLAGS}  ${XEUS_EMSCRIPTEN_WASM_FLAGS} ---proxy-to-worker")
+    # ENV (https://github.com/emscripten-core/emscripten/commit/6d9681ad04f60b41ef6345ab06c29bbc9eeb84e0)
+    set(EMSCRIPTEN_FEATURES "${EMSCRIPTEN_FEATURES} -s \"EXTRA_EXPORTED_RUNTIME_METHODS=[ENV']\"")
 endif()
-
-
-
 
 # Source files
 # ============
@@ -188,12 +172,12 @@ macro(xeus_wren_set_common_options target_name)
             target_compile_options(${target_name} PUBLIC -march=native)
         endif ()
 
-        # C++{cookiecutter.cpp_standart} flag
+        # C++17 flag
         CHECK_CXX_COMPILER_FLAG("-std=c++17" HAS_CPP_17_FLAG)
         if (HAS_CPP_17_FLAG)
             target_compile_features(${target_name} PRIVATE cxx_std_17)
         else ()
-            message(FATAL_ERROR "Unsupported compiler -- xeus-wren requires C++{cookiecutter.cpp_standart} support!")
+            message(FATAL_ERROR "Unsupported compiler -- xeus-wren requires C++17 support!")
         endif ()
     endif ()
 
@@ -223,11 +207,15 @@ macro(xeus_wren_set_kernel_options target_name)
     else ()
         target_link_libraries(${target_name} PRIVATE xeus-wren-static)
     endif()
-    find_package(Threads) 
-    target_link_libraries(${target_name} PRIVATE ${CMAKE_THREAD_LIBS_INIT})
+    if(NOT XEUS_WREN_EMSCRIPTEN_WASM_BUILD)
+        find_package(Threads)
+        target_link_libraries(${target_name} PRIVATE ${CMAKE_THREAD_LIBS_INIT} ${WREN_LIBRARIES})
+    else()
+        target_link_libraries(${target_name} PRIVATE ${WREN_LIBRARIES})
+    endif()
 endmacro()
 
-# Common macro for shared and static library
+# Common macro for shared and static library xeus-wren
 macro(xeus_wren_create_target target_name linkage output_name)
     string(TOUPPER "${linkage}" linkage_upper)
 
@@ -263,13 +251,16 @@ macro(xeus_wren_create_target target_name linkage output_name)
 
     target_link_libraries(${target_name} PUBLIC ${XEUS_WREN_XEUS_TARGET} xtl )
     if (WIN32 OR CYGWIN)
-        # 
+        #
     elseif (APPLE)
         target_link_libraries(${target_name} PRIVATE "-undefined dynamic_lookup")
     endif ()
-
-    find_package(Threads) # TODO: add Threads as a dependence of xeus-static?
-    target_link_libraries(${target_name} PRIVATE ${CMAKE_THREAD_LIBS_INIT} ${WREN_LIBRARY})
+    if(NOT XEUS_WREN_EMSCRIPTEN_WASM_BUILD)
+        find_package(Threads) # TODO: add Threads as a dependence of xeus-static?
+        target_link_libraries(${target_name} PRIVATE ${CMAKE_THREAD_LIBS_INIT} ${WREN_LIBRARY})
+    else()
+        target_link_libraries(${target_name} PRIVATE ${WREN_LIBRARY})
+    endif()
 
 endmacro()
 
@@ -297,7 +288,7 @@ endif ()
 
 # xeus-wren
 # =======
-if (XEUS_WREN_BUILD_EXECUTABLE AND NOT XEUS_WREN_EMSCRIPTEN_WASM_BUILD)
+if (XEUS_WREN_BUILD_EXECUTABLE)
     add_executable(xwren ${XEUS_WREN_MAIN_SRC})
     target_compile_features(xwren PRIVATE cxx_std_17)
     xeus_wren_set_common_options(xwren)
@@ -306,11 +297,9 @@ endif()
 
 if(XEUS_WREN_EMSCRIPTEN_WASM_BUILD)
     add_executable(xeus_kernel src/main_emscripten_kernel.cpp )
-    target_link_libraries(xeus_kernel  xeus-wren-static)
+    target_link_libraries(xeus_kernel xeus-wren-static)
     target_compile_features(xeus_kernel PRIVATE cxx_std_17)
 endif()
-
-
 
 # Installation
 # ============
