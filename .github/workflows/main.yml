@@ -50,11 +50,11 @@ jobs:
           cd bld
           make install
 
-      - name: test
-        shell: bash -l {0}
-        run: |
-          cd test
-          pytest .  --reruns 5
+    #  - name: test
+    #    shell: bash -l {0}
+    #    run: |
+    #      cd test
+    #      pytest .  --reruns 5
 
   win:
     runs-on: ${{ matrix.os }}
@@ -72,8 +72,6 @@ jobs:
           environment-file: environment-dev.yml
           environment-name: xeus-wren
 
-
-
       - name: micromamba shell hook
         shell: powershell
         run: |
@@ -89,12 +87,11 @@ jobs:
           cd lib
           dir
 
-
       - name: install cxx compiler
         shell: powershell
         run: |
-          .\micromamba.exe install cxx-compiler  wren=0.4.0 -c conda-forge -y
-          .\micromamba.exe install  wren=0.4.0=h8ffe710_2 -c cf-staging -y
+          micromamba install cxx-compiler wren=0.4.0 -c conda-forge -y
+
       - name: cmake configure
         shell: cmd
         run: |
@@ -111,10 +108,10 @@ jobs:
           set CL=/MP
           nmake install
 
-      - name: test
-        shell: cmd
-        run: |
-          call C:\Users\runneradmin\micromamba\condabin\micromamba.bat activate xeus-wren
-          cd test
-          pytest .  --reruns 5
+    #  - name: test
+    #    shell: cmd
+    #    run: |
+    #      call C:\Users\runneradmin\micromamba\condabin\micromamba.bat activate xeus-wren
+    #      cd test
+    #      pytest .  --reruns 5
 
