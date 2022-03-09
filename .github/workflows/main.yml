@@ -50,11 +50,11 @@ jobs:
           cd bld
           make install
 
-      - name: test
-        shell: bash -l {0}
-        run: |
-          cd test
-          pytest .  --reruns 5
+    #  - name: test
+    #    shell: bash -l {0}
+    #    run: |
+    #      cd test
+    #      pytest .  --reruns 5
 
   win:
     runs-on: ${{ matrix.os }}
@@ -111,10 +111,10 @@ jobs:
           set CL=/MP
           nmake install
 
-      - name: test
-        shell: cmd
-        run: |
-          call C:\Users\runneradmin\micromamba\condabin\micromamba.bat activate xeus-wren
-          cd test
-          pytest .  --reruns 5
+    #  - name: test
+    #    shell: cmd
+    #    run: |
+    #      call C:\Users\runneradmin\micromamba\condabin\micromamba.bat activate xeus-wren
+    #      cd test
+    #      pytest .  --reruns 5
 
