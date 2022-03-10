@@ -1,8 +1,5 @@
 # ![xeus-wren](docs/source/xeus-logo.svg)
 
-
-
-
 [![Build Status](https://github.com/DerThorsten/xeus-wren/actions/workflows/main.yml/badge.svg)](https://github.com/DerThorsten/xeus-wren/actions/workflows/main.yml)
 
 [![Documentation Status](http://readthedocs.org/projects/xeus-python/badge/?version=latest)](https://xeus-wrenreadthedocs.io/en/latest/?badge=latest)
@@ -61,14 +58,11 @@ To try out xeus-wren interactively in your web browser, just click on the binder
 
 [![Binder](binder-logo.svg)](https://mybinder.org/v2/gh/DerThorsten/xeus-wren/main?urlpath=/lab/tree/notebooks/iwren.ipynb)
 
-
-
 ## Documentation
 
 To get started with using `xeus-wren`, check out the full documentation
 
 http://xeus-wren.readthedocs.io
-
 
 ## Dependencies
 
@@ -77,8 +71,6 @@ http://xeus-wren.readthedocs.io
 - [xeus](https://github.com/jupyter-xeus/xeus)
 - [xtl](https://github.com/xtensor-stack/xtl)
 - [nlohmann_json](https://github.com/nlohmann/json)
-
-
 
 ## Contributing
 
@@ -89,3 +81,4 @@ development environment.
 
 This software is licensed under the `BSD 3-Clause License`. See the [LICENSE](LICENSE)
 file for details.
+
