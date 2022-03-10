@@ -73,7 +73,7 @@ endif()
 # Dependencies
 # ============
 
-set(xtl_REQUIRED_VERSION 0.6.23)
+set(xtl_REQUIRED_VERSION 0.7.0)
 set(xeus_REQUIRED_VERSION 2.4.0)
 
 if (NOT TARGET xtl)
@@ -83,7 +83,7 @@ if (NOT TARGET xeus AND NOT TARGET xeus-static)
     find_package(xeus ${xeus_REQUIRED_VERSION} REQUIRED)
 endif ()
 
-find_package(WREN  REQUIRED)
+find_package(WREN REQUIRED)
 
 # Flags
 # =====

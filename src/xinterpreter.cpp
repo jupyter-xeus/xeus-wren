@@ -22,8 +22,6 @@
 
 namespace nl = nlohmann;
 
-
-
 namespace xeus_wren
 {
  
@@ -43,10 +41,9 @@ namespace xeus_wren
     // implemented in xio.cpp
     void write_fn(WrenVM* /*vm*/, const char* text);
     void error_fn(WrenVM* /*vm*/, WrenErrorType errorType,
-             const char* module, const int line,
-             const char* msg);
+                  const char* module, const int line,
+                  const char* msg);
     void blocking_input_request(WrenVM* vm);
-
 
     WrenLoadModuleResult load_module_fn(WrenVM* vm, const char* name) 
     {
@@ -158,8 +155,6 @@ namespace xeus_wren
         // alloc
         p_vm = wrenNewVM(&config);
 
-      
-
         xeus::register_interpreter(this);
     }
 
@@ -169,25 +164,24 @@ namespace xeus_wren
     }
 
     nl::json interpreter::execute_request_impl(int execution_counter, // Typically the cell number
-                                                      const std::string& code, // Code to execute
-                                                      bool /*silent*/,
-                                                      bool /*store_history*/,
-                                                      nl::json /*user_expressions*/,
-                                                      bool /*allow_stdin*/)
+                                               const std::string& code, // Code to execute
+                                               bool /*silent*/,
+                                               bool /*store_history*/,
+                                               nl::json /*user_expressions*/,
+                                               bool /*allow_stdin*/)
     {
         nl::json kernel_res;
         kernel_res["payload"] = nl::json::array();
         kernel_res["user_expressions"] = nl::json::object();
 
-
         std::stringstream codestream; 
-        codestream << "{var closure = Meta.compileExpression(\""<<code<<"\")}";
+        codestream << "{var closure = Meta.compileExpression(\"" << code << "\")}";
 
-        WrenInterpretResult result = wrenInterpret(p_vm, "main",code.c_str());
-        //WrenInterpretResult result = wrenInterpret(p_vm, "main",codestream.str().c_str());
+        WrenInterpretResult result = wrenInterpret(p_vm, "main", code.c_str());
+        //WrenInterpretResult result = wrenInterpret(p_vm, "main", codestream.str().c_str());
 
-
-        switch (result) {
+        switch (result)
+	{
             case WREN_RESULT_COMPILE_ERROR:
             { 
                 kernel_res["status"] = "error";
@@ -220,15 +214,11 @@ namespace xeus_wren
         //pub_data["text/plain"] = code;
         publish_execution_result(execution_counter, std::move(pub_data), nl::json());
 
-
         return kernel_res;
-
     }
 
     void interpreter::configure_impl()
     {
-
-        //m_forein_methods["main"]["Jstdin"]["readLine()"] = blocking_input_request;
         m_forein_methods["iwren"]["Stdin"]["readLine()"] = blocking_input_request;
         m_forein_methods["iwren"]["JsonEncode"]["encodeStr(_)"] =  json_encode_str;
         m_forein_methods["iwren"]["Display"]["display_data(_,_,_)"] =  xeus_wren::display_data;
@@ -253,13 +243,12 @@ namespace xeus_wren
             result["indent"] = "   ";
         }
 
-
         return result;
     }
 
     nl::json interpreter::inspect_request_impl(const std::string& code,
-                                                      int /*cursor_pos*/,
-                                                      int /*detail_level*/)
+                                               int /*cursor_pos*/,
+                                               int /*detail_level*/)
     {
         nl::json result;
         result["status"] = "ok";
@@ -276,7 +265,6 @@ namespace xeus_wren
         std::cerr << "shuting down xwren" << std::endl;
     }
 
-
     nl::json interpreter::kernel_info_request_impl()
     {
         nl::json result;
@@ -288,13 +276,12 @@ namespace xeus_wren
         result["language_info"]["mimetype"] = "text/x-wren";
         result["language_info"]["file_extension"] = "wren";
         result["language_info"]["codemirror_mode"] = "wren";
+        result["status"] = "ok";
         return result;
     }
-
 
     void interpreter::write_handler(const char* text)
     {
         this->publish_stream("stdout", text);
     }
-
 }
