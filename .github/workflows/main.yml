@@ -24,11 +24,6 @@ jobs:
           environment-file: environment-dev.yml
           environment-name: xeus-wren
 
-      - name: install cxx compiler
-        shell: bash -l {0}
-        run: |
-          $HOME/micromamba-bin/micromamba install cxx-compiler -c conda-forge -y
-
       - name: cmake configure
         shell: bash -l {0}
         run: |
@@ -75,38 +70,33 @@ jobs:
       - name: micromamba shell hook
         shell: powershell
         run: |
-          micromamba shell hook -s cmd.exe -p C:\Users\runneradmin\micromamba
+          micromamba shell hook -s cmd.exe -p C:\Users\runneradmin\micromamba-root
 
       - name: info
         shell: cmd
         run: |
-          call C:\Users\runneradmin\micromamba\condabin\micromamba.bat activate xeus-wren
-          cd %CONDA_PREFIX%\Library
-          dir
+          call C:\Users\runneradmin\micromamba-root\condabin\micromamba.bat activate xeus-wren
+          cd %CONDA_PREFIX%
           cd Library
           cd lib
           dir
 
-      - name: install cxx compiler
-        shell: powershell
-        run: |
-          micromamba install cxx-compiler wren=0.4.0 -c conda-forge -y
 
       - name: cmake configure
         shell: cmd
         run: |
-          call C:\Users\runneradmin\micromamba\condabin\micromamba.bat activate xeus-wren
+          call C:\Users\runneradmin\micromamba-root\condabin\micromamba.bat activate xeus-wren
           mkdir -p bld
           cd bld
-          cmake .. -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release -DXEUS_BUILD_TESTS=ON -DDEPENDENCY_SEARCH_PREFIX="%CONDA_PREFIX%\Library" -DCMAKE_PREFIX_PATH="%CONDA_PREFIX%\Library" -DCMAKE_INSTALL_PREFIX="%CONDA_PREFIX%" -DWREN_LIBRARY=%CONDA_PREFIX%\Library\lib\libwren.lib
+          cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="%CONDA_PREFIX%\Library" -DCMAKE_INSTALL_PREFIX="%CONDA_PREFIX%" -DWREN_LIBRARY="%CONDA_PREFIX%\Library\lib\libwren.lib"
 
       - name: build
         shell: cmd
         run: |
-          call C:\Users\runneradmin\micromamba\condabin\micromamba.bat activate xeus-wren
+          call C:\Users\runneradmin\micromamba-root\condabin\micromamba.bat activate xeus-wren
           cd bld
           set CL=/MP
-          nmake install
+          ninja install
 
     #  - name: test
     #    shell: cmd
