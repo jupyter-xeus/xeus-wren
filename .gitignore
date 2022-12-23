@@ -33,3 +33,6 @@
 *.wasm
 
 bld
+
+# generated kernel specs
+/share/jupyter/kernels/xwren/kernel.json
