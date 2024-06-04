@@ -124,7 +124,7 @@ int main(int argc, char* argv[])
                              xeus::get_user_name(),
                              std::move(context),
                              std::move(interpreter),
-                             xeus::make_xserver_shell_main=);
+                             xeus::make_xserver_shell_main);
 
         std::cout <<
             "Starting xeus-wren kernel...\n\n"
