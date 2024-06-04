@@ -7,10 +7,10 @@ dependencies:
   - ninja
   - cxx-compiler
   # Host dependencies
-  - xeus-zmq>=1.0, <2.0
+  - xeus>=5.0,<=6
+  - xeus-zmq
   - nlohmann_json
   - cppzmq
-  - xtl
   - wren
   # Test dependencies
   - pytest
