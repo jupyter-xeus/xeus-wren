@@ -163,12 +163,11 @@ namespace xeus_wren
         wrenFreeVM(p_vm);
     }
 
-    nl::json interpreter::execute_request_impl(int execution_counter, // Typically the cell number
-                                               const std::string& code, // Code to execute
-                                               bool /*silent*/,
-                                               bool /*store_history*/,
-                                               nl::json /*user_expressions*/,
-                                               bool /*allow_stdin*/)
+    void interpreter::execute_request_impl(send_reply_callback cb,
+                                  int /*execution_counter*/,
+                                  const std::string& /*code*/,
+                                  xeus::execute_request_config /*config*/,
+                                  nl::json /*user_expressions*/) 
     {
         nl::json kernel_res;
         kernel_res["payload"] = nl::json::array();
@@ -181,7 +180,7 @@ namespace xeus_wren
         //WrenInterpretResult result = wrenInterpret(p_vm, "main", codestream.str().c_str());
 
         switch (result)
-	{
+	    {
             case WREN_RESULT_COMPILE_ERROR:
             { 
                 kernel_res["status"] = "error";
@@ -214,7 +213,7 @@ namespace xeus_wren
         //pub_data["text/plain"] = code;
         publish_execution_result(execution_counter, std::move(pub_data), nl::json());
 
-        return kernel_res;
+        cb(kernel_res);
     }
 
     void interpreter::configure_impl()
