@@ -164,14 +164,14 @@ namespace xeus_wren
     }
 
     void interpreter::execute_request_impl(send_reply_callback cb,
-                                  int /*execution_counter*/,
-                                  const std::string& /*code*/,
+                                  int execution_counter,
+                                  const std::string& code,
                                   xeus::execute_request_config /*config*/,
-                                  nl::json /*user_expressions*/) 
+                                  nl::json user_expressions) 
     {
         nl::json kernel_res;
         kernel_res["payload"] = nl::json::array();
-        kernel_res["user_expressions"] = nl::json::object();
+        kernel_res["user_expressions"] =user_expressions;
 
         std::stringstream codestream; 
         codestream << "{var closure = Meta.compileExpression(\"" << code << "\")}";
