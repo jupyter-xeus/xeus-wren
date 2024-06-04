@@ -68,15 +68,10 @@ endif()
 # Dependencies
 # ============
 
-set(xtl_REQUIRED_VERSION 0.7.0)
-set(xeus_REQUIRED_VERSION 3.0.0)
 
-if (NOT TARGET xtl)
-    find_package(xtl ${xtl_REQUIRED_VERSION} REQUIRED)
-endif ()
-if (NOT TARGET xeus AND NOT TARGET xeus-static)
-    find_package(xeus ${xeus_REQUIRED_VERSION} REQUIRED)
-endif ()
+set(xeus_REQUIRED_VERSION 5.0.0)
+find_package(xeus ${xeus_REQUIRED_VERSION} REQUIRED)
+
 
 message(STATUS "Before searching for WREN")
 find_package(WREN REQUIRED)
@@ -230,7 +225,7 @@ macro(xeus_wren_create_target target_name linkage output_name)
         set(XEUS_WREN_XEUS_TARGET xeus-static)
     endif ()
 
-    target_link_libraries(${target_name} PUBLIC ${XEUS_WREN_XEUS_TARGET} xtl )
+    target_link_libraries(${target_name} PUBLIC ${XEUS_WREN_XEUS_TARGET}  )
     if (WIN32 OR CYGWIN)
         #
     elseif (APPLE)
